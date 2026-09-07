@@ -38,6 +38,17 @@ let currentLongitude = null;
 
 
 // ============================================================
+// RENDER BACKEND
+// ============================================================
+
+// IMPORTANT:
+// This is your deployed FastAPI backend.
+
+const API_BASE_URL =
+    "https://meteora-s26r.onrender.com";
+
+
+// ============================================================
 // SEARCH ELEMENTS
 // ============================================================
 
@@ -100,40 +111,95 @@ async function searchLocation() {
     try {
 
         searchButton.disabled = true;
-
         searchButton.innerText = "⌛";
 
 
         // ----------------------------------------------------
-        // LOCATION SEARCH
+        // LOCATION ALIASES
         // ----------------------------------------------------
 
-        const url =
-            "https://geocoding-api.open-meteo.com/v1/search" +
-            `?name=${encodeURIComponent(locationName)}` +
-            "&count=10" +
-            "&language=en" +
-            "&format=json";
+        const normalizedName =
+            locationName.toLowerCase();
+
+        const aliases = {
+
+            "cherrapunji": ["Sohra"],
+
+            "cherrapunjee": ["Sohra"],
+
+            "sohra": ["Cherrapunji"]
+
+        };
 
 
-        const response =
-            await fetch(url);
+        const searchQueries = [
+            locationName
+        ];
 
 
-        if (!response.ok) {
+        if (aliases[normalizedName]) {
 
-            throw new Error(
-                "Location search failed"
+            searchQueries.push(
+                ...aliases[normalizedName]
             );
 
         }
 
 
-        const data =
-            await response.json();
+        // ----------------------------------------------------
+        // GEOCODING
+        // ----------------------------------------------------
 
+        let data = null;
+
+
+        for (
+            const query of searchQueries
+        ) {
+
+            const url =
+                "https://geocoding-api.open-meteo.com/v1/search" +
+                `?name=${encodeURIComponent(query)}` +
+                "&count=100" +
+                "&language=en" +
+                "&format=json";
+
+
+            const response =
+                await fetch(url);
+
+
+            if (!response.ok) {
+
+                continue;
+
+            }
+
+
+            const candidateData =
+                await response.json();
+
+
+            if (
+                candidateData.results &&
+                candidateData.results.length > 0
+            ) {
+
+                data = candidateData;
+
+                break;
+
+            }
+
+        }
+
+
+        // ----------------------------------------------------
+        // NO LOCATION FOUND
+        // ----------------------------------------------------
 
         if (
+            !data ||
             !data.results ||
             data.results.length === 0
         ) {
@@ -148,7 +214,7 @@ async function searchLocation() {
 
 
         // ----------------------------------------------------
-        // PREFER MAHARASHTRA RESULT
+        // SELECT BEST RESULT
         // ----------------------------------------------------
 
         let result =
@@ -189,14 +255,14 @@ async function searchLocation() {
 
 
         // ----------------------------------------------------
-        // REMOVE OLD OVERLAY
+        // REMOVE OLD WEATHER OVERLAY
         // ----------------------------------------------------
 
         removeWeatherOverlay();
 
 
         // ----------------------------------------------------
-        // SHOW WEATHER PANEL ONLY AFTER SEARCH
+        // SHOW WEATHER PANEL
         // ----------------------------------------------------
 
         const panel =
@@ -368,6 +434,7 @@ async function searchLocation() {
             error
         );
 
+
         alert(
             "Something went wrong while searching."
         );
@@ -400,14 +467,36 @@ async function loadWeather(
 
         const response =
             await fetch(
-                `http://127.0.0.1:8000/weather?lat=${latitude}&lon=${longitude}`
+                `${API_BASE_URL}/weather?lat=${latitude}&lon=${longitude}`
             );
 
 
         if (!response.ok) {
 
+            let errorMessage =
+                "Weather API request failed.";
+
+            try {
+
+                const errorData =
+                    await response.json();
+
+                if (errorData.detail) {
+
+                    errorMessage =
+                        errorData.detail;
+
+                }
+
+            } catch (error) {
+
+                // Ignore JSON parsing error
+
+            }
+
+
             throw new Error(
-                "Weather API request failed"
+                errorMessage
             );
 
         }
@@ -417,7 +506,9 @@ async function loadWeather(
             await response.json();
 
 
-        // Add location information
+        // ----------------------------------------------------
+        // LOCATION INFORMATION
+        // ----------------------------------------------------
 
         data.location_name =
             locationData.name;
@@ -429,19 +520,25 @@ async function loadWeather(
             locationData.country || "";
 
 
-        // Update weather card
+        // ----------------------------------------------------
+        // UPDATE WEATHER PANEL
+        // ----------------------------------------------------
 
         updateWeatherPanel(data);
 
 
-        // Weather animation
+        // ----------------------------------------------------
+        // WEATHER ANIMATION
+        // ----------------------------------------------------
 
         createWeatherOverlay(
             data.condition
         );
 
 
-        // ML prediction
+        // ----------------------------------------------------
+        // ML PREDICTION
+        // ----------------------------------------------------
 
         loadMLPrediction(
             latitude,
@@ -454,6 +551,12 @@ async function loadWeather(
         console.error(
             "Weather loading error:",
             error
+        );
+
+
+        alert(
+            error.message ||
+            "Weather data is currently unavailable."
         );
 
     }
@@ -479,8 +582,6 @@ function updateWeatherPanel(data) {
 
     }
 
-
-    // Make panel visible
 
     panel.style.display =
         "block";
@@ -1034,7 +1135,7 @@ async function loadMLPrediction(
 
         const response =
             await fetch(
-                `http://127.0.0.1:8000/ml-prediction?lat=${latitude}&lon=${longitude}`
+                `${API_BASE_URL}/ml-prediction?lat=${latitude}&lon=${longitude}`
             );
 
 
@@ -1057,7 +1158,9 @@ async function loadMLPrediction(
         );
 
 
-        // Remove loading message
+        // ----------------------------------------------------
+        // REMOVE LOADING MESSAGE
+        // ----------------------------------------------------
 
         const loading =
             document.getElementById(
@@ -1072,7 +1175,9 @@ async function loadMLPrediction(
         }
 
 
-        // Remove old prediction
+        // ----------------------------------------------------
+        // REMOVE OLD PREDICTION
+        // ----------------------------------------------------
 
         const existingAI =
             document.getElementById(
@@ -1140,7 +1245,9 @@ async function loadMLPrediction(
             trendText =
                 "Temperature is expected to rise.";
 
-        } else if (
+        }
+
+        else if (
             difference < -0.3
         ) {
 
