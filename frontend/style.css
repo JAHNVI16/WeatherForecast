@@ -1,0 +1,1202 @@
+/* =========================================================
+   WEATHERSPHERE AI
+   ========================================================= */
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+html,
+body {
+
+    width: 100%;
+    height: 100%;
+
+    margin: 0;
+    padding: 0;
+
+    overflow: hidden;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+
+/* =========================================================
+   CESIUM
+   ========================================================= */
+
+#cesiumContainer {
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    z-index: 1;
+
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+#searchBox {
+
+    position: fixed;
+
+    top: 30px;
+    left: 30px;
+
+    display: flex;
+
+    gap: 10px;
+
+    z-index: 5000;
+
+}
+
+
+#locationInput {
+
+    width: 350px;
+    height: 52px;
+
+    padding:
+        0 18px;
+
+    box-sizing: border-box;
+
+    border: none;
+
+    border-radius: 16px;
+
+    outline: none;
+
+    background:
+        rgba(255, 255, 255, 0.95);
+
+    color:
+        #17233c;
+
+    font-size: 17px;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, 0.25);
+
+}
+
+
+#locationInput::placeholder {
+
+    color:
+        #777;
+
+}
+
+
+#searchButton {
+
+    width: 52px;
+    height: 52px;
+
+    border: none;
+
+    border-radius: 16px;
+
+    background:
+        rgba(20, 55, 110, 0.95);
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, 0.25);
+
+    transition:
+        transform 0.2s ease;
+
+}
+
+
+#searchButton:hover {
+
+    transform:
+        scale(1.05);
+
+}
+
+
+#searchButton:disabled {
+
+    opacity: 0.7;
+
+    cursor: wait;
+
+}
+
+
+/* =========================================================
+   WEATHER PANEL
+   ========================================================= */
+
+/*
+   IMPORTANT:
+   Hidden when the website first opens.
+   JavaScript changes this to block after searching.
+*/
+
+#weatherPanel {
+
+    display: none;
+
+    position: fixed;
+
+    top: 30px;
+    right: 30px;
+
+    width: 360px;
+    height: 520px;
+
+    box-sizing: border-box;
+
+    padding: 22px;
+
+    z-index: 4000;
+
+    overflow-y: auto;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20, 70, 130, 0.94),
+            rgba(18, 35, 75, 0.96)
+        );
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20);
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(0, 0, 0, 0.35);
+
+    backdrop-filter:
+        blur(16px);
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    animation:
+        panelAppear 0.5s ease;
+
+}
+
+
+/* =========================================================
+   PANEL SCROLLBAR
+   ========================================================= */
+
+#weatherPanel::-webkit-scrollbar {
+
+    width: 5px;
+
+}
+
+
+#weatherPanel::-webkit-scrollbar-track {
+
+    background:
+        transparent;
+
+}
+
+
+#weatherPanel::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(255, 255, 255, 0.25);
+
+    border-radius:
+        10px;
+
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.weather-header {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.weather-city {
+
+    font-size:
+        25px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.1;
+
+}
+
+
+.weather-state {
+
+    margin-top:
+        5px;
+
+    font-size:
+        13px;
+
+    opacity:
+        0.70;
+
+}
+
+
+.live-indicator {
+
+    display: flex;
+
+    align-items:
+        center;
+
+    gap:
+        6px;
+
+    padding:
+        7px 10px;
+
+    border-radius:
+        20px;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+
+    font-size:
+        11px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.7px;
+
+}
+
+
+.live-indicator span {
+
+    width:
+        8px;
+
+    height:
+        8px;
+
+    display:
+        block;
+
+    border-radius:
+        50%;
+
+    background:
+        #ff5b5b;
+
+    box-shadow:
+        0 0 10px
+        rgba(255, 80, 80, 0.8);
+
+}
+
+
+/* =========================================================
+   TEMPERATURE
+   ========================================================= */
+
+.temperature-section {
+
+    margin-top:
+        5px;
+
+}
+
+
+.temperature {
+
+    font-size:
+        62px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        -2px;
+
+}
+
+
+.condition {
+
+    margin-top:
+        8px;
+
+    font-size:
+        19px;
+
+    opacity:
+        0.90;
+
+}
+
+
+/* =========================================================
+   WEATHER DETAILS
+   ========================================================= */
+
+.weather-details {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap:
+        10px;
+
+    margin-top:
+        22px;
+
+}
+
+
+.weather-detail {
+
+    min-height:
+        72px;
+
+    padding:
+        8px;
+
+    box-sizing:
+        border-box;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    text-align:
+        center;
+
+    border-radius:
+        15px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+}
+
+
+.detail-icon {
+
+    font-size:
+        19px;
+
+    margin-bottom:
+        4px;
+
+}
+
+
+.detail-value {
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+}
+
+
+.detail-label {
+
+    margin-top:
+        3px;
+
+    font-size:
+        10px;
+
+    opacity:
+        0.65;
+
+}
+
+
+/* =========================================================
+   HOURLY
+   ========================================================= */
+
+.hourly-title {
+
+    margin-top:
+        22px;
+
+    margin-bottom:
+        10px;
+
+    font-size:
+        11px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        1.5px;
+
+    opacity:
+        0.75;
+
+}
+
+
+.hourly-container {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    overflow-x:
+        auto;
+
+    padding-bottom:
+        5px;
+
+}
+
+
+.hourly-container::-webkit-scrollbar {
+
+    height:
+        4px;
+
+}
+
+
+.hourly-container::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(255, 255, 255, 0.25);
+
+    border-radius:
+        10px;
+
+}
+
+
+.hour-card {
+
+    min-width:
+        58px;
+
+    padding:
+        10px 7px;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        center;
+
+    border-radius:
+        14px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+}
+
+
+.hour-time {
+
+    font-size:
+        10px;
+
+    opacity:
+        0.70;
+
+    white-space:
+        nowrap;
+
+}
+
+
+.hour-icon {
+
+    margin:
+        7px 0;
+
+    font-size:
+        21px;
+
+}
+
+
+.hour-temp {
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+}
+
+
+/* =========================================================
+   AI LOADING
+   ========================================================= */
+
+#aiLoading {
+
+    margin-top:
+        18px;
+
+    padding:
+        15px;
+
+    text-align:
+        center;
+
+    border-radius:
+        16px;
+
+    background:
+        rgba(255, 255, 255, 0.07);
+
+    font-size:
+        12px;
+
+    opacity:
+        0.75;
+
+}
+
+
+/* =========================================================
+   AI PREDICTION
+   ========================================================= */
+
+#aiPrediction {
+
+    margin-top:
+        18px;
+
+    padding:
+        16px 18px;
+
+    text-align:
+        center;
+
+    border-radius:
+        17px;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    box-shadow:
+        0 8px 25px
+        rgba(0, 0, 0, 0.15);
+
+    animation:
+        aiPredictionAppear
+        0.5s ease;
+
+}
+
+
+.ai-title {
+
+    font-size:
+        11px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        1.5px;
+
+    opacity:
+        0.85;
+
+    margin-bottom:
+        5px;
+
+}
+
+
+.ai-temperature {
+
+    font-size:
+        30px;
+
+    font-weight:
+        700;
+
+    margin:
+        4px 0;
+
+}
+
+
+.ai-description {
+
+    font-size:
+        11px;
+
+    opacity:
+        0.75;
+
+    margin-top:
+        3px;
+
+}
+
+
+.ai-comparison {
+
+    font-size:
+        11px;
+
+    opacity:
+        0.65;
+
+    margin-top:
+        8px;
+
+}
+
+
+.ai-trend {
+
+    margin-top:
+        8px;
+
+    font-size:
+        11px;
+
+    opacity:
+        0.85;
+
+}
+
+
+/* =========================================================
+   WEATHER OVERLAY
+   ========================================================= */
+
+#weatherOverlay {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    z-index:
+        3000;
+
+    pointer-events:
+        none;
+
+    overflow:
+        hidden;
+
+}
+
+
+/* =========================================================
+   CLOUDS
+   ========================================================= */
+
+.weather-clouds {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    overflow:
+        hidden;
+
+}
+
+
+.weather-cloud {
+
+    position:
+        absolute;
+
+    width:
+        150px;
+
+    height:
+        45px;
+
+    border-radius:
+        50px;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+
+    filter:
+        blur(2px);
+
+    animation:
+        cloudMove
+        35s linear infinite;
+
+}
+
+
+.weather-cloud::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        65px;
+
+    height:
+        65px;
+
+    left:
+        25px;
+
+    bottom:
+        8px;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+
+}
+
+
+.weather-cloud::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        80px;
+
+    height:
+        80px;
+
+    right:
+        20px;
+
+    bottom:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+
+}
+
+
+.weather-cloud:nth-child(1) {
+
+    top:
+        15%;
+
+    left:
+        -200px;
+
+    animation-duration:
+        35s;
+
+}
+
+
+.weather-cloud:nth-child(2) {
+
+    top:
+        35%;
+
+    left:
+        -250px;
+
+    animation-duration:
+        45s;
+
+    animation-delay:
+        5s;
+
+}
+
+
+.weather-cloud:nth-child(3) {
+
+    top:
+        55%;
+
+    left:
+        -300px;
+
+    animation-duration:
+        40s;
+
+    animation-delay:
+        10s;
+
+}
+
+
+.weather-cloud:nth-child(4) {
+
+    top:
+        75%;
+
+    left:
+        -220px;
+
+    animation-duration:
+        50s;
+
+    animation-delay:
+        15s;
+
+}
+
+
+@keyframes cloudMove {
+
+    from {
+
+        transform:
+            translateX(-200px);
+
+    }
+
+    to {
+
+        transform:
+            translateX(
+                calc(100vw + 300px)
+            );
+
+    }
+
+}
+
+
+/* =========================================================
+   RAIN
+   ========================================================= */
+
+.rain-container {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+}
+
+
+.rain-drop {
+
+    position:
+        absolute;
+
+    top:
+        -30px;
+
+    width:
+        2px;
+
+    height:
+        18px;
+
+    background:
+        rgba(180, 220, 255, 0.55);
+
+    transform:
+        rotate(12deg);
+
+    animation:
+        rainFall
+        linear infinite;
+
+}
+
+
+@keyframes rainFall {
+
+    from {
+
+        transform:
+            translateY(-30px)
+            rotate(12deg);
+
+    }
+
+    to {
+
+        transform:
+            translateY(110vh)
+            rotate(12deg);
+
+    }
+
+}
+
+
+/* =========================================================
+   LIGHTNING
+   ========================================================= */
+
+.lightning {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    background:
+        rgba(255, 255, 255, 0.18);
+
+    opacity:
+        0;
+
+    animation:
+        lightningFlash
+        5s infinite;
+
+}
+
+
+@keyframes lightningFlash {
+
+    0%,
+    88%,
+    100% {
+
+        opacity:
+            0;
+
+    }
+
+    89% {
+
+        opacity:
+            0.8;
+
+    }
+
+    90% {
+
+        opacity:
+            0;
+
+    }
+
+    91% {
+
+        opacity:
+            0.5;
+
+    }
+
+    92% {
+
+        opacity:
+            0;
+
+    }
+
+}
+
+
+/* =========================================================
+   PANEL ANIMATION
+   ========================================================= */
+
+@keyframes panelAppear {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateX(30px);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateX(0);
+
+    }
+
+}
+
+
+@keyframes aiPredictionAppear {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(10px);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    #searchBox {
+
+        top:
+            15px;
+
+        left:
+            15px;
+
+        right:
+            15px;
+
+    }
+
+
+    #locationInput {
+
+        width:
+            100%;
+
+    }
+
+
+    #weatherPanel {
+
+        top:
+            90px;
+
+        left:
+            15px;
+
+        right:
+            15px;
+
+        width:
+            auto;
+
+        height:
+            500px;
+
+    }
+
+}

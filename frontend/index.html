@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>WeatherSphere AI</title>
+
+    <link
+        href="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Widgets/widgets.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- 3D Globe -->
+    <div id="cesiumContainer"></div>
+
+
+    <!-- Search -->
+    <div id="searchBox">
+
+        <input
+            type="text"
+            id="locationInput"
+            placeholder="Search city... e.g. Akola"
+        >
+
+        <button id="searchButton">
+            🔍
+        </button>
+
+    </div>
+
+
+    <!-- Weather Panel -->
+    <div id="weatherPanel"></div>
+
+
+    <!-- Cesium -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Cesium.js"></script>
+
+
+    <!-- Cesium Ion -->
+    <script>
+
+        Cesium.Ion.defaultAccessToken = "PASTE_YOUR_NEW_CESIUM_TOKEN_HERE";
+
+    </script>
+
+
+    <!-- Our JavaScript -->
+    <script src="./app.js"></script>
+
+</body>
+
+</html>
